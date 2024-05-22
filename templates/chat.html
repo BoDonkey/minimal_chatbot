@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Apostrophe Docbot Chat</title>
+    <title>Your Chatbot Interface</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/default.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.1/marked.min.js" integrity="sha512-pSeTnZAQF/RHxb0ysMoYQI/BRZsa5XuklcrgFfU3YZIdnD3LvkkqzrIeHxzFi6gKtI8Cpq2DEWdZjMTcNVhUYA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.js"
+      integrity="sha512-luMnTJZ7oEchNDZAtQhgjomP1eZefnl82ruTH/3Oj/Yu5qYtwL7+dVRccACS/Snp1lFXq188XFipHKYE75IaQQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script type="text/javascript">
+      document.addEventListener('DOMContentLoaded', (event) => {
+        var socket = io.connect(
+          location.protocol + '//' + document.domain + ':' + location.port
+        );
+
+        socket.on('connect', () => {
+          console.log('User connected!');
+        });
+
+        socket.on('message', function (msg) {
+          console.log('Received message: ' + msg);
+          appendMessage('You: ' + msg);
+          // Update your chat UI here
+        });
+
+        // Listen for responses from the server
+        socket.on('response', function (data) {
+          appendMessage(data.data, 'server'); // Append the server's response
+          // Optionally, create a new input field for the next message (demonstration purposes)
+          //createNewInputField();
+        });
+
+        // Directly attach an event handler to your button
+        document
+          .getElementById('sendButton')
+          .addEventListener('click', function () {
+            console.log('button clicked');
+            var message = document.getElementById('your-message-input').value;
+            appendMessage('You: ' + message, 'user');
+            socket.send(message);
+            document.getElementById('your-message-input').value = '';
+          });
+
+        function appendMessage(message, sender = 'user') {
+            console.log('in appendMessage', message);
+          var messageList = document.getElementById('messageList');
+          var msgElement = document.createElement('li');
+
+          // Convert markdown to HTML
+          let htmlContent = marked.parse(message);
+
+          // Set the innerHTML of your msgElement to support HTML content
+          msgElement.innerHTML = htmlContent;
+
+          // Apply syntax highlighting to any code within the message
+          msgElement.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightBlock(block);
+          });
+
+          // Assign classes based on the sender
+          if (sender === 'user') {
+            msgElement.className = 'user-message';
+          } else if (sender === 'server') {
+            msgElement.className = 'server-response';
+          }
+
+          messageList.appendChild(msgElement);
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <style>
+      #chatBox {
+        display: flex;
+        flex-direction: column-reverse;
+        align-items: center;
+        width: 90vw;
+        border: black 2px solid;
+        padding: 10px;
+      }
+
+      #your-message-input {
+        width: 100%;
+        margin-top: 10px;
+        box-sizing: border-box; /* Ensures padding doesn't affect overall width */
+      }
+
+      button#sendButton {
+        width: 100px;
+        height: 40px;
+        margin-top: 10px;
+      }
+
+      .user-message {
+        color: blue;
+        background-color: #f0f0f0;
+        padding: 5px;
+        margin: 2px;
+        border-radius: 4px;
+        text-align: end;
+      }
+
+      .server-response {
+        color: green;
+        background-color: #e0e0e0;
+        padding: 5px;
+        margin: 2px;
+        border-radius: 4px;
+      }
+    </style>
+    <div id="chatBox">
+      <ul id="messageList"></ul>
+      <textarea id="your-message-input" rows="4" cols="50"></textarea>
+      <button id="sendButton">Send</button>
+    </div>
+  </body>
+</html>
